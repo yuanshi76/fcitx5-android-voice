@@ -1,0 +1,76 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools">
+
+    <!-- 网络 API 调用：OpenAI 兼容的语音转写接口 -->
+    <uses-permission android:name="android.permission.INTERNET" />
+    <!-- 录音 -->
+    <uses-permission android:name="android.permission.RECORD_AUDIO" />
+
+    <uses-feature
+        android:name="android.hardware.microphone"
+        android:required="false" />
+
+    <application
+        android:icon="@mipmap/ic_launcher"
+        android:label="@string/app_name"
+        android:supportsRtl="true"
+        android:usesCleartextTraffic="true"
+        android:theme="@style/Theme.VoiceInput">
+        <!-- usesCleartextTraffic：允许访问用户自建的 HTTP 语音服务（如局域网 whisper-server）。
+             使用公网 API 时请尽量配置 https:// 的 Base URL。 -->
+
+        <!-- ===== fcitx5-android 插件规范要件 =====
+             1) res/xml/plugin.xml：插件描述符（apiVersion 0.1），
+                主程序 DataManager.detectPlugins() 解析它来识别插件；
+             2) 带 "org.fcitx.fcitx5.android.plugin.MANIFEST" intent-filter 的 activity：
+                主程序用它发现插件并在"设置 -> 插件"页中打开插件界面。
+                按规范该入口可以是 AboutActivity，这里直接指向本插件的配置页面，
+                使"点击插件 -> 打开插件配置页面"一步到位。 -->
+        <meta-data
+            android:name="org.fcitx.fcitx5.android.plugin.METADATA"
+            android:resource="@xml/plugin" />
+
+        <!-- 语音输入法主体：
+             以 InputMethodSubtype mode="voice" 注册（见 res/xml/method.xml），
+             这正是 fcitx5-android 主程序"显示语音输入按钮"开关所查找的子类型
+             （InputMethodUtil.findVoiceSubtype: subtype.mode == "voice"）。
+             用户点击键盘工具栏上的麦克风图标 -> 主程序切换到本输入法 -> 开始录音。 -->
+        <service
+            android:name=".VoiceInputMethodService"
+            android:directBootAware="false"
+            android:exported="true"
+            android:label="@string/ime_label"
+            android:permission="android.permission.BIND_INPUT_METHOD">
+            <intent-filter>
+                <action android:name="android.view.InputMethod" />
+            </intent-filter>
+            <meta-data
+                android:name="android.view.im"
+                android:resource="@xml/method" />
+        </service>
+
+        <!-- 插件配置页：模型名称 / Base URL / API Key / 语言 等由用户自行配置。
+             同时也是 fcitx5-android 插件发现 activity（MANIFEST intent-filter）。 -->
+        <activity
+            android:name=".SettingsActivity"
+            android:exported="true"
+            android:launchMode="singleTask"
+            android:label="@string/settings_title">
+            <!-- 被 fcitx5-android 主程序（release 版）发现/打开 -->
+            <intent-filter>
+                <action android:name="org.fcitx.fcitx5.android.plugin.MANIFEST" />
+            </intent-filter>
+            <!-- 被主程序 debug 变体发现/打开（org.fcitx.fcitx5.android.debug） -->
+            <intent-filter>
+                <action android:name="org.fcitx.fcitx5.android.debug.plugin.MANIFEST" />
+            </intent-filter>
+            <!-- 桌面启动器入口，方便直接打开配置页 -->
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity>
+    </application>
+
+</manifest>

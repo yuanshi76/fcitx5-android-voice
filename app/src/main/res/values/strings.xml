@@ -1,0 +1,74 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- app_name is a resValue set in build.gradle.kts (debug/release variants) -->
+
+    <string name="ime_label">Voice Input (FCITX5 Plugin)</string>
+    <string name="subtype_voice_name">Voice Input</string>
+
+    <string name="plugin_description">Network speech recognition for fcitx5-android via an OpenAI-compatible audio transcription API (Whisper / v1/audio/transcriptions). Enable the voice (microphone) button in fcitx5-android keyboard settings; tapping it switches to this input method and starts recording.</string>
+
+    <string name="settings_title">Voice Input Settings</string>
+
+    <string name="pref_category_api">API (OpenAI-compatible)</string>
+    <string name="pref_base_url_title">Base URL</string>
+    <string name="pref_base_url_summary">e.g. https://api.openai.com/v1</string>
+    <string name="pref_base_url_dialog">OpenAI-compatible base URL. The plugin calls POST {baseUrl}/audio/transcriptions.</string>
+    <string name="pref_api_key_title">API Key</string>
+    <string name="pref_api_key_summary">Bearer token sent to the API</string>
+    <string name="pref_api_key_dialog">Your API key (Authorization: Bearer …)</string>
+    <string name="pref_model_title">Model</string>
+    <string name="pref_model_summary">e.g. whisper-1</string>
+    <string name="pref_model_dialog">Model name passed to the transcription endpoint</string>
+    <string name="pref_language_title">Language hint</string>
+    <string name="pref_language_summary">"auto" lets the model detect</string>
+
+    <string name="pref_category_recording">Recording</string>
+    <string name="pref_auto_start_title">Auto start on switch</string>
+    <string name="pref_auto_start_summary">Begin recording immediately when this input method is activated (the moment you tap the microphone button on the fcitx5 keyboard)</string>
+    <string name="pref_grant_permission_title">Microphone permission</string>
+    <string name="pref_grant_permission_summary">Tap to grant RECORD_AUDIO permission (required for dictation)</string>
+    <string name="pref_auto_return_title">Return to fcitx5 when keyboard hides</string>
+    <string name="pref_auto_return_summary">Stay on the voice panel after a commit for continuous dictation; next time the keyboard is summoned it will be fcitx5 again</string>
+    <string name="pref_test_api_title">Test connection</string>
+    <string name="pref_test_api_summary">Record 2 seconds and run a transcription to verify the configuration</string>
+
+    <string name="pref_category_help">Getting started</string>
+    <string name="pref_enable_ime_title">Enable this input method</string>
+    <string name="pref_enable_ime_summary">Open Android input method settings and check “Voice Input (FCITX5 Plugin)”</string>
+    <string name="pref_usage_hint">1. Enable the input method above.\n2. In fcitx5-android → Keyboard settings, turn on “Show voice input button” and pick this voice input.\n3. Tap the microphone icon on the keyboard to open the voice panel, then **press and hold** the center button to talk and **release** to recognize and insert the text.</string>
+
+    <!-- Voice input UI -->
+    <string name="voice_idle">Tap the microphone to start dictation</string>
+    <string name="voice_listening">Listening…</string>
+    <string name="voice_recording">Recording %1$s s</string>
+    <string name="voice_recognizing">Recognizing…</string>
+    <string name="voice_committed">Committed</string>
+    <string name="voice_empty">No speech recognized</string>
+    <string name="voice_error_generic">Error: %1$s</string>
+    <string name="voice_error_not_configured">Please configure Base URL / Model in the plugin settings first</string>
+    <string name="voice_error_permission">Microphone permission denied. Grant it in the plugin settings.</string>
+    <string name="voice_error_no_network">Network request failed. Check Base URL / API Key and network.</string>
+
+    <!-- buttons / content descriptions -->
+    <string name="btn_settings">Settings</string>
+    <string name="btn_switch_keyboard">Back to keyboard</string>
+    <string name="btn_hide_keyboard">Hide keyboard</string>
+    <string name="notify_channel_name">Voice input</string>
+
+    <string-array name="language_entries">
+        <item>Auto detect</item>
+        <item>中文 (zh)</item>
+        <item>English (en)</item>
+        <item>日本語 (ja)</item>
+        <item>한국어 (ko)</item>
+        <item>粤语 (yue)</item>
+    </string-array>
+    <string-array name="language_values">
+        <item>auto</item>
+        <item>zh</item>
+        <item>en</item>
+        <item>ja</item>
+        <item>ko</item>
+        <item>yue</item>
+    </string-array>
+</resources>

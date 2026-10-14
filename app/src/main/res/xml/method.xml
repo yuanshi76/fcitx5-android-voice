@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<input-method xmlns:android="http://schemas.android.com/apk/res/android"
+    android:settingsActivity="org.fcitx.fcitx5.android.plugin.voice_input.SettingsActivity"
+    android:icon="@drawable/ic_mic_24"
+    android:supportsSwitchingToNextInputMethod="false">
+    <!-- 关键：android:imeSubtypeMode="voice" —— fcitx5-android 主程序据此
+         判定本输入法为"语音输入法"（InputMethodUtil.findVoiceSubtype 检查
+         subtype.mode == "voice"），从而在键盘工具栏显示麦克风图标：
+         插件启用后界面即出现语音输入入口，点击切换到本输入法开始录音。 -->
+    <subtype
+        android:name="@string/subtype_voice_name"
+        android:icon="@drawable/ic_mic_24"
+        android:subtypeId="0x766f6963"
+        android:imeSubtypeMode="voice"
+        android:isAuxiliary="false"
+        android:overridesImplicitlyEnabledSubtype="false" />
+</input-method>

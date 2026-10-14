@@ -1,0 +1,14 @@
+[versions]
+# 与 fcitx5-android master 保持一致的已验证版本组合
+agp = "9.4.1"
+kotlin = "2.4.10"
+appcompat = "1.7.0"
+preference = "1.2.1"
+
+[libraries]
+androidx-appcompat = { group = "androidx.appcompat", name = "appcompat", version.ref = "appcompat" }
+androidx-preference = { group = "androidx.preference", name = "preference-ktx", version.ref = "preference" }
+
+[plugins]
+android-application = { id = "com.android.application", version.ref = "agp" }
+kotlin-android = { id = "org.jetbrains.kotlin.android", version.ref = "kotlin" }

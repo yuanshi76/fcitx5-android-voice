@@ -1,0 +1,89 @@
+<?xml version="1.0" encoding="utf-8"?>
+<PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:title="@string/settings_title">
+
+    <PreferenceCategory
+        android:title="@string/pref_category_api"
+        app:iconSpaceReserved="false">
+
+        <EditTextPreference
+            app:key="base_url"
+            app:title="@string/pref_base_url_title"
+            app:summary="@string/pref_base_url_summary"
+            app:dialogMessage="@string/pref_base_url_dialog"
+            app:defaultValue="https://api.openai.com/v1"
+            app:useSimpleSummaryProvider="true"
+            app:iconSpaceReserved="false" />
+
+        <EditTextPreference
+            app:key="api_key"
+            app:title="@string/pref_api_key_title"
+            app:summary="@string/pref_api_key_summary"
+            app:dialogMessage="@string/pref_api_key_dialog"
+            app:iconSpaceReserved="false" />
+
+        <EditTextPreference
+            app:key="model"
+            app:title="@string/pref_model_title"
+            app:summary="@string/pref_model_summary"
+            app:dialogMessage="@string/pref_model_dialog"
+            app:defaultValue="whisper-1"
+            app:useSimpleSummaryProvider="true"
+            app:iconSpaceReserved="false" />
+
+        <ListPreference
+            app:key="language"
+            app:title="@string/pref_language_title"
+            app:summary="@string/pref_language_summary"
+            app:entries="@array/language_entries"
+            app:entryValues="@array/language_values"
+            app:defaultValue="auto"
+            app:useSimpleSummaryProvider="true"
+            app:iconSpaceReserved="false" />
+
+    </PreferenceCategory>
+
+    <PreferenceCategory
+        android:title="@string/pref_category_recording"
+        app:iconSpaceReserved="false">
+
+        <Preference
+            app:key="grant_record_permission"
+            app:title="@string/pref_grant_permission_title"
+            app:summary="@string/pref_grant_permission_summary"
+            app:iconSpaceReserved="false" />
+
+        <SwitchPreferenceCompat
+            app:key="auto_return_fcitx"
+            app:title="@string/pref_auto_return_title"
+            app:summary="@string/pref_auto_return_summary"
+            app:defaultValue="true"
+            app:iconSpaceReserved="false" />
+
+        <Preference
+            app:key="test_api"
+            app:title="@string/pref_test_api_title"
+            app:summary="@string/pref_test_api_summary"
+            app:iconSpaceReserved="false" />
+
+    </PreferenceCategory>
+
+    <PreferenceCategory
+        android:title="@string/pref_category_help"
+        app:iconSpaceReserved="false">
+
+        <Preference
+            app:key="enable_ime"
+            app:title="@string/pref_enable_ime_title"
+            app:summary="@string/pref_enable_ime_summary"
+            app:iconSpaceReserved="false" />
+
+        <Preference
+            app:selectable="false"
+            app:summary="@string/pref_usage_hint"
+            app:iconSpaceReserved="false" />
+
+    </PreferenceCategory>
+
+</PreferenceScreen>

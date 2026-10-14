@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <style name="Theme.VoiceInput" parent="Theme.AppCompat.DayNight">
+        <item name="colorPrimary">@color/teal_500</item>
+        <item name="colorAccent">@color/teal_500</item>
+        <item name="preferenceTheme">@style/PreferenceThemeOverlay</item>
+    </style>
+</resources>

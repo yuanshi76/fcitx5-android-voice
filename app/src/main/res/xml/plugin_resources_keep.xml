@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  ~ This file is needed to prevent the build system from stripping resources
+  ~ needed by plugin.xml. It is not included in the APK.
+  -->
+<resources xmlns:tools="http://schemas.android.com/tools"
+    tools:discard=""
+    tools:keep="@string/plugin_description" />

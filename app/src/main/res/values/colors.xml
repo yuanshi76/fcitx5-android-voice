@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="teal_500">#00897B</color>
+    <color name="teal_700">#00695C</color>
+    <color name="red_a200">#FF5252</color>
+    <color name="ime_bg">#263238</color>
+    <color name="ime_fg">#ECEFF1</color>
+    <color name="mic_idle">#B2DFDB</color>
+    <color name="mic_active">#FF5252</color>
+</resources>
