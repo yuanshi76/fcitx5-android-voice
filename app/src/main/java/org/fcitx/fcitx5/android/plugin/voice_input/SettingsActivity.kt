@@ -250,6 +250,10 @@ class SettingsActivity : AppCompatActivity() {
                 toast(R.string.voice_error_permission)
                 return
             }
+            if (prefs.model.contains("realtime", ignoreCase = true)) {
+                testRealtime(ctx, prefs)
+                return
+            }
             toast(R.string.voice_recognizing)
             thread(name = "voice-test") {
                 try {
@@ -261,6 +265,47 @@ class SettingsActivity : AppCompatActivity() {
                     val msg = text.ifBlank { requireContext().getString(R.string.voice_empty) }
                     activity?.runOnUiThread { Toast.makeText(ctx, msg, Toast.LENGTH_LONG).show() }
                 } catch (e: Exception) {
+                    activity?.runOnUiThread {
+                        Toast.makeText(ctx, e.message ?: e.javaClass.simpleName, Toast.LENGTH_LONG).show()
+                    }
+                }
+            }
+        }
+
+        /** 实时模型测试：连 WS → 流式送 4 秒麦克风音频 → 等最终转写 */
+        private fun testRealtime(ctx: android.content.Context, prefs: VoicePrefs) {
+            toast(R.string.voice_listening)
+            val finals = StringBuilder()
+            val done = java.util.concurrent.CountDownLatch(1)
+            var error: String? = null
+            val client = RealtimeDictationClient(prefs, object : RealtimeDictationClient.Callback {
+                override fun onPartial(text: String) {}
+                override fun onFinal(text: String) {
+                    finals.append(text)
+                }
+
+                override fun onFailure(message: String) {
+                    error = message
+                    done.countDown()
+                }
+
+                override fun onClosed() {
+                    done.countDown()
+                }
+            })
+            thread(name = "voice-rt-test") {
+                try {
+                    client.start()
+                    Thread.sleep(4000L)
+                    client.stop()
+                    done.await(6, java.util.concurrent.TimeUnit.SECONDS)
+                    val msg = error
+                        ?: finals.toString().ifBlank { ctx.getString(R.string.voice_empty) }
+                    activity?.runOnUiThread {
+                        Toast.makeText(ctx, msg, Toast.LENGTH_LONG).show()
+                    }
+                } catch (e: Exception) {
+                    client.cancel()
                     activity?.runOnUiThread {
                         Toast.makeText(ctx, e.message ?: e.javaClass.simpleName, Toast.LENGTH_LONG).show()
                     }

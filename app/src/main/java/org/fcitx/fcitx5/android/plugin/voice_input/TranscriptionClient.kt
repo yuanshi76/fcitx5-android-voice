@@ -63,8 +63,8 @@ class TranscriptionClient {
         if (cfg.model.contains("realtime", ignoreCase = true)) {
             throw ApiException(
                 400,
-                "「${cfg.model}」是实时语音对话模型（WebSocket），不能用于当前同步语音输入；" +
-                        "非实时识别请改用 qwen-audio-3.0-asr-flash（实时听写功能将在下一版本支持）"
+                "「${cfg.model}」是实时模型：请在语音面板按住麦克风听写（自动启用 WebSocket 实时引擎），" +
+                        "同步整段转写请改用 qwen-audio-3.0-asr-flash"
             )
         }
         return when (resolveMode(cfg)) {
