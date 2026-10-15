@@ -73,9 +73,17 @@ fcitx5-android 的已发布版本内置了语音输入集成机制（`app/.../in
   提升连续听写一致性与专名召回，可在设置中关闭。
 - 单次录音上限提高到 120s（base64 后约 5MB，仍在百炼 10MB 限制内）。
 
-### 规划：实时听写（下版本）
-Token Plan 支持的 `qwen-audio-3.0-realtime-plus` 为实时语音**对话**模型（WS 协议，见 docs/），
-将走原生 WebSocket + OkHttp 实现边说边上屏（partial 结果用 composing text 显示），不引入 NUI aar（+15MB）。
+### 实时听写（qwen-audio-3.0-realtime-plus）
+模型名包含 `realtime` 时自动启用**实时引擎**（OkHttp WebSocket，不依赖 NUI aar）：
+
+- WS 地址由 Base URL 自动推导：`wss://{host}/api-ws/v1/realtime?model={模型}`
+- 按住麦克风期间流式发送 16kHz PCM（100ms/帧，base64 append）
+- 服务端 `server_vad` 自动断句：`transcription.delta`（text+stash）→ 输入框** composing 实时显示**；
+  `transcription.completed` → 整句自动 `commitText` 上屏，可继续说下一句
+- 对话模型行为用 `session.update.instructions` 约束为"仅转写不回答"，即时热词经 instructions 注入
+- 松开按钮后等待最后一句结果（≤1.5s）再关闭会话
+
+同步（asr-flash）与实时（realtime-plus）两种模型可在「语音方案」里各存一个，随时切换。
 
 ## 配置项（插件配置页）
 
