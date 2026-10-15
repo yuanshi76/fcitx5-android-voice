@@ -136,6 +136,24 @@ class TranscriptionClient {
 
     // ---------- DashScope（原生 / OpenAI兼容 chat） ----------
 
+    /**
+     * 取服务根地址（scheme://host[/自定义前缀]）：剥掉百炼已知的 API 版本路径，
+     * 以便在不同模式间正确重拼。例如
+     *   https://token-plan.cn-beijing.maas.aliyuncs.com/compatible-mode/v1
+     *   -> https://token-plan.cn-beijing.maas.aliyuncs.com
+     * 原生接口在 /api/v1/... 下，兼容模式在 /compatible-mode/v1/... 下，两者不能混拼。
+     */
+    private fun apiRoot(baseUrl: String): String {
+        var b = baseUrl.trimEnd('/')
+        for (suffix in listOf("/compatible-mode/v1", "/api/v1", "/v1")) {
+            if (b.endsWith(suffix)) {
+                b = b.removeSuffix(suffix)
+                break
+            }
+        }
+        return b
+    }
+
     private fun dashScopeDataUrl(wav: ByteArray): String =
         "data:audio/wav;base64," + Base64.encodeToString(wav, Base64.NO_WRAP)
 
@@ -146,17 +164,14 @@ class TranscriptionClient {
             val b = cfg.baseUrl
             when {
                 b.endsWith("/multimodal-generation/generation") -> b
-                b.endsWith("/api/v1") -> "$b/services/aigc/multimodal-generation/generation"
-                b.endsWith("/v1") -> "$b/services/aigc/multimodal-generation/generation"
-                else -> "$b/api/v1/services/aigc/multimodal-generation/generation"
+                else -> "${apiRoot(b)}/api/v1/services/aigc/multimodal-generation/generation"
             }
         } else {
             val b = cfg.baseUrl
             when {
                 b.endsWith("/chat/completions") -> b
-                b.endsWith("/compatible-mode/v1") -> "$b/chat/completions"
-                b.endsWith("/v1") && b.contains("compatible-mode") -> "$b/chat/completions"
-                else -> "$b/compatible-mode/v1/chat/completions"
+                b.endsWith("/v1") -> "$b/chat/completions"
+                else -> "${apiRoot(b)}/compatible-mode/v1/chat/completions"
             }
         }
 
