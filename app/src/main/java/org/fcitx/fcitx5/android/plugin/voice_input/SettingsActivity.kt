@@ -99,7 +99,28 @@ class SettingsActivity : AppCompatActivity() {
                 true
             }
 
+            populateReturnSubtypes()
             refreshProfiles()
+        }
+
+        /** 列出 fcitx5 主程序的非英文动态子类型（extraValue=输入法 uniqueName）供固定选择 */
+        private fun populateReturnSubtypes() {
+            val pref = findPreference<ListPreference>("fcitx_return_subtype") ?: return
+            val imm = requireContext()
+                .getSystemService(android.content.Context.INPUT_METHOD_SERVICE)
+                as android.view.inputmethod.InputMethodManager
+            val fcitxImi = imm.enabledInputMethodList
+                .firstOrNull { it.packageName == BuildConfig.MAIN_APPLICATION_ID }
+            val subtypes = fcitxImi?.let {
+                imm.getEnabledInputMethodSubtypeList(it, true)
+                    .filter { s -> s.extraValue.isNotEmpty() && s.extraValue != "keyboard-us" }
+                    .map { s -> s.extraValue }
+            } ?: emptyList()
+            val entries = mutableListOf(getString(R.string.pref_return_subtype_auto))
+            val values = mutableListOf("")
+            subtypes.forEach { entries.add(it); values.add(it) }
+            pref.entries = entries.toTypedArray()
+            pref.entryValues = values.toTypedArray()
         }
 
         override fun onResume() {
@@ -272,20 +293,32 @@ class SettingsActivity : AppCompatActivity() {
             }
         }
 
-        /** 实时模型测试：连 WS → 流式送 4 秒麦克风音频 → 等最终转写 */
+        /**
+         * 实时模型测试：连 WS → 等音频通道就绪 → 流式送 5 秒麦克风音频 → 等最终转写。
+         * 未收到 completed 时用最后一次 delta 兜底（避免"未识别到语音"误报）。
+         */
         private fun testRealtime(ctx: android.content.Context, prefs: VoicePrefs) {
-            toast(R.string.voice_listening)
             val finals = StringBuilder()
+            val lastPartial = java.util.concurrent.atomic.AtomicReference("")
+            val audioReady = java.util.concurrent.CountDownLatch(1)
             val done = java.util.concurrent.CountDownLatch(1)
             var error: String? = null
             val client = RealtimeDictationClient(prefs, object : RealtimeDictationClient.Callback {
-                override fun onPartial(text: String) {}
+                override fun onPartial(text: String) {
+                    lastPartial.set(text)
+                    activity?.runOnUiThread {
+                        Toast.makeText(ctx, ctx.getString(R.string.voice_listening) + " " + text,
+                            Toast.LENGTH_SHORT).show()
+                    }
+                }
+
                 override fun onFinal(text: String) {
                     finals.append(text)
                 }
 
                 override fun onFailure(message: String) {
                     error = message
+                    audioReady.countDown()
                     done.countDown()
                 }
 
@@ -293,14 +326,19 @@ class SettingsActivity : AppCompatActivity() {
                     done.countDown()
                 }
             })
+            client.onAudioReady = { audioReady.countDown() }
+            toast(R.string.voice_rt_test_hint)
             thread(name = "voice-rt-test") {
                 try {
                     client.start()
-                    Thread.sleep(4000L)
+                    // 等握手 + session 就绪（最多 8s），再开始 5s 录音窗口
+                    audioReady.await(8, java.util.concurrent.TimeUnit.SECONDS)
+                    Thread.sleep(5000L)
                     client.stop()
-                    done.await(6, java.util.concurrent.TimeUnit.SECONDS)
-                    val msg = error
-                        ?: finals.toString().ifBlank { ctx.getString(R.string.voice_empty) }
+                    done.await(8, java.util.concurrent.TimeUnit.SECONDS)
+                    val msg = error ?: (
+                            finals.toString().ifBlank { lastPartial.get() }
+                                .ifBlank { ctx.getString(R.string.voice_empty) })
                     activity?.runOnUiThread {
                         Toast.makeText(ctx, msg, Toast.LENGTH_LONG).show()
                     }

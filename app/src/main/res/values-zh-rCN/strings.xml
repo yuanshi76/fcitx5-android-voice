@@ -49,6 +49,9 @@
     <string name="pref_grant_permission_summary">点击授予录音权限（RECORD_AUDIO），语音输入必需</string>
     <string name="pref_auto_return_title">收起键盘后返回 fcitx5</string>
     <string name="pref_auto_return_summary">识别完成后停留在语音界面可连续听写；当你收起输入窗口后，下次唤起键盘自动回到 fcitx5</string>
+    <string name="pref_return_subtype_title">返回时使用的 fcitx5 输入法</string>
+    <string name="pref_return_subtype_summary">自动（推荐）；若返回后总变成英文，可在此固定为你的输入法</string>
+    <string name="pref_return_subtype_auto">自动（取 fcitx5 第一个非英文子类型）</string>
     <string name="pref_test_api_title">测试连接</string>
     <string name="pref_test_api_summary">录制 2 秒并执行一次转写，验证配置是否正确</string>
 
@@ -58,6 +61,7 @@
     <string name="pref_usage_hint">1. 先启用本输入法；\n2. 在 fcitx5-android → 键盘设置中打开「显示语音输入按钮」，并选择本语音输入法；\n3. 点击键盘上的麦克风图标进入语音界面，**按住**中央按钮说话，**松开**后自动识别并把文字输入到当前输入框。</string>
 
     <string name="voice_idle">点击麦克风开始语音输入</string>
+    <string name="voice_rt_test_hint">正在连接实时服务，随后请持续说话 5 秒…</string>
     <string name="voice_listening">正在聆听…</string>
     <string name="voice_recording">录音中 %1$s 秒</string>
     <string name="voice_recognizing">识别中…</string>

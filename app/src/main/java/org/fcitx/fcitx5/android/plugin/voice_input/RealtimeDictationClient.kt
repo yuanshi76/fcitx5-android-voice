@@ -46,6 +46,10 @@ class RealtimeDictationClient(
         fun onClosed()
     }
 
+    /** 音频已开始上行（WS 握手 + session 就绪后），测试流程用于对齐计时 */
+    @Volatile
+    var onAudioReady: (() -> Unit)? = null
+
     private val http = OkHttpClient.Builder()
         .pingInterval(20, TimeUnit.SECONDS)
         .readTimeout(0, TimeUnit.MILLISECONDS)
@@ -87,7 +91,7 @@ class RealtimeDictationClient(
             return
         }
         thread(name = "voice-rt-drain") {
-            val deadline = System.currentTimeMillis() + 1500
+            val deadline = System.currentTimeMillis() + 2500
             while (pendingFinal && System.currentTimeMillis() < deadline) {
                 try {
                     Thread.sleep(50)
@@ -220,6 +224,7 @@ class RealtimeDictationClient(
         }
         recorder = r
         streaming = true
+        onAudioReady?.invoke()
         val frame = ByteArray(3200) // 100ms @16k/16bit/mono
         audioThread = thread(name = "voice-rt-audio") {
             try {

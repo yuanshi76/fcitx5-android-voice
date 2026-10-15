@@ -109,6 +109,14 @@
             app:summary="@string/pref_grant_permission_summary"
             app:iconSpaceReserved="false" />
 
+        <ListPreference
+            app:key="fcitx_return_subtype"
+            app:title="@string/pref_return_subtype_title"
+            app:summary="@string/pref_return_subtype_summary"
+            app:dialogTitle="@string/pref_return_subtype_title"
+            app:defaultValue=""
+            app:iconSpaceReserved="false" />
+
         <SwitchPreferenceCompat
             app:key="auto_return_fcitx"
             app:title="@string/pref_auto_return_title"

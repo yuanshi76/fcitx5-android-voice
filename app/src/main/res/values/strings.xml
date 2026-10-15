@@ -51,6 +51,9 @@
     <string name="pref_grant_permission_summary">Tap to grant RECORD_AUDIO permission (required for dictation)</string>
     <string name="pref_auto_return_title">Return to fcitx5 when keyboard hides</string>
     <string name="pref_auto_return_summary">Stay on the voice panel after a commit for continuous dictation; next time the keyboard is summoned it will be fcitx5 again</string>
+    <string name="pref_return_subtype_title">fcitx5 input method to restore</string>
+    <string name="pref_return_subtype_summary">Auto (recommended); pin yours here if returning always lands on English</string>
+    <string name="pref_return_subtype_auto">Auto (first non-English fcitx5 subtype)</string>
     <string name="pref_test_api_title">Test connection</string>
     <string name="pref_test_api_summary">Record 2 seconds and run a transcription to verify the configuration</string>
 
@@ -61,6 +64,7 @@
 
     <!-- Voice input UI -->
     <string name="voice_idle">Tap the microphone to start dictation</string>
+    <string name="voice_rt_test_hint">Connecting to realtime service; keep talking for 5s…</string>
     <string name="voice_listening">Listening…</string>
     <string name="voice_recording">Recording %1$s s</string>
     <string name="voice_recognizing">Recognizing…</string>

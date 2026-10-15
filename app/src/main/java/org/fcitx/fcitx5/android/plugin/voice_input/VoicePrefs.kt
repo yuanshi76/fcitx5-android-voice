@@ -51,6 +51,10 @@ class VoicePrefs(context: Context) {
     val useContext: Boolean
         get() = prefs.getBoolean(KEY_USE_CONTEXT, true)
 
+    /** 上屏后返回 fcitx5 时优先激活的子类型（extraValue = fcitx 输入法 uniqueName，"" 为自动） */
+    val fcitxSubtype: String
+        get() = prefs.getString(KEY_FCITX_SUBTYPE, "")!!.trim()
+
     val autoReturn: Boolean
         get() = prefs.getBoolean(KEY_AUTO_RETURN, true)
 
@@ -67,6 +71,7 @@ class VoicePrefs(context: Context) {
         const val KEY_VOCAB_ID = "vocabulary_id"
         const val KEY_USE_CONTEXT = "use_context"
         const val KEY_AUTO_RETURN = "auto_return_fcitx"
+        const val KEY_FCITX_SUBTYPE = "fcitx_return_subtype"
 
         const val API_MODE_AUTO = "auto"
         const val API_MODE_OPENAI = "openai"

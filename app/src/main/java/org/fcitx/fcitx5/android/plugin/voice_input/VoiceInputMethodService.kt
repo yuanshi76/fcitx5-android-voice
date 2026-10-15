@@ -341,18 +341,25 @@ class VoiceInputMethodService : android.inputmethodservice.InputMethodService() 
     }
 
     /**
-     * 从 fcitx5 已启用的 subtype 中挑选"用户真实输入法"对应的 subtype：
-     * 动态 subtype 的 extraValue 即 fcitx 输入法 uniqueName（如 "pinyin"）；
-     * 静态英文 subtype 的 extraValue 为空，"keyboard-us" 也排除。
-     * 恰好一个候选时返回它（顺带修复被污染的系统记忆），否则返回 null（尊重系统记忆）。
+     * 从 fcitx5 已启用的 subtype 中挑选切回应使用的 subtype。
+     * Android 14+ 上 fcitx5 为每个激活的输入法注册动态 subtype（extraValue = 输入法
+     * uniqueName）。要点：
+     * 1. 用户可用设置项 fcitx_return_subtype 显式指定 extraValue（如 pinyin）；
+     * 2. 否则取启用列表中第一个"非英文键盘"的动态 subtype（列表顺序与 fcitx5
+     *    输入法启用顺序一致，即用户的主输入法），修复被污染的"上次使用"记忆；
+     * 3. 完全找不到时才传 null 走系统记忆。
      */
     private fun pickFcitxCurrentSubtype(
         imm: InputMethodManager,
         fcitxImi: android.view.inputmethod.InputMethodInfo
     ): android.view.inputmethod.InputMethodSubtype? {
-        val candidates = imm.getEnabledInputMethodSubtypeList(fcitxImi, true)
-            .filter { it.extraValue.isNotEmpty() && it.extraValue != "keyboard-us" }
-        return candidates.singleOrNull()
+        val enabled = imm.getEnabledInputMethodSubtypeList(fcitxImi, true)
+        prefs.fcitxSubtype.takeIf { it.isNotEmpty() }?.let { want ->
+            enabled.firstOrNull { it.extraValue == want }?.let { return it }
+        }
+        return enabled.firstOrNull {
+            it.extraValue.isNotEmpty() && it.extraValue != "keyboard-us"
+        }
     }
 
     private fun openSettings() {
