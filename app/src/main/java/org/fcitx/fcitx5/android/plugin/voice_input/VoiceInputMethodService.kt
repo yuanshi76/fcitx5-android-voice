@@ -48,10 +48,10 @@ class VoiceInputMethodService : android.inputmethodservice.InputMethodService() 
     /** 本会话最近的识别结果，作为上下文随下一次请求发送（最多 5 条） */
     private val recentCommits = ArrayDeque<String>()
 
-    /** 实时听写引擎（model 含 realtime 时启用） */
-    private var realtime: RealtimeDictationClient? = null
-    private val isRealtimeModel: Boolean
-        get() = prefs.model.contains("realtime", ignoreCase = true)
+    /** 实时听写引擎（百炼 realtime 模型或 CapsWriter ws:// 渠道时启用） */
+    private var engine: DictationEngine? = null
+    private val isRealtimeChannel: Boolean
+        get() = prefs.engineKind() != EngineKind.Sync
 
     private var statusText: TextView? = null
     private var micButton: ImageButton? = null
@@ -63,7 +63,7 @@ class VoiceInputMethodService : android.inputmethodservice.InputMethodService() 
             statusText?.text = getString(R.string.voice_recording, recordSeconds.toString())
             if (recordSeconds >= VoicePrefs.MAX_RECORD_SECONDS) {
                 Toast.makeText(this@VoiceInputMethodService, R.string.voice_recognizing, Toast.LENGTH_SHORT).show()
-                if (realtime != null) stopRealtime() else finishRecordingAndRecognize()
+                if (engine != null) stopRealtime() else finishRecordingAndRecognize()
                 return
             }
             mainHandler.postDelayed(this, 1000L)
@@ -83,19 +83,19 @@ class VoiceInputMethodService : android.inputmethodservice.InputMethodService() 
         statusText = view.findViewById(R.id.status_text)
         micButton = view.findViewById(R.id.btn_mic)
         // 按住说话（push-to-talk）：按下开始，松开结束。
-        // realtime 模型走 WebSocket 实时引擎（边说边上屏，VAD 自动断句）；
-        // 其余模型走"整段录音→同步转写"。
+        // 实时渠道（ws:// 或 realtime 模型）走 WebSocket 引擎（边说边上屏）；
+        // 其余走"整段录音→同步转写"。
         micButton?.setOnTouchListener { _, event ->
             when (event.actionMasked) {
                 MotionEvent.ACTION_DOWN -> {
                     if (state == State.Idle) {
-                        if (isRealtimeModel) startRealtime() else startRecording()
+                        if (isRealtimeChannel) startRealtime() else startRecording()
                     }
                     true
                 }
                 MotionEvent.ACTION_UP, MotionEvent.ACTION_CANCEL -> {
                     when {
-                        realtime != null -> stopRealtime()
+                        engine != null -> stopRealtime()
                         state == State.Recording -> finishRecordingAndRecognize()
                     }
                     true
@@ -153,10 +153,24 @@ class VoiceInputMethodService : android.inputmethodservice.InputMethodService() 
 
     // ---------- 实时听写（WebSocket） ----------
 
+    /** 按路由规则创建实时引擎（百炼 realtime / CapsWriter 自建） */
+    private fun createEngine(contextStr: String): DictationEngine =
+        when (prefs.engineKind()) {
+            EngineKind.CapsWriterRealtime ->
+                CapsWriterDictationClient(prefs, contextStr, realtimeCallback)
+            else ->
+                RealtimeDictationClient(prefs, contextStr, realtimeCallback)
+        }
+
+    private fun sessionContext(): String =
+        if (prefs.useContext) synchronized(recentCommits) {
+            recentCommits.drop((recentCommits.size - 3).coerceAtLeast(0)).joinToString(" ")
+        } else ""
+
     private fun startRealtime() {
         if (!precheck()) return
-        val client = RealtimeDictationClient(prefs, realtimeCallback)
-        realtime = client
+        val client = createEngine(sessionContext())
+        engine = client
         state = State.Recording
         recordSeconds = 0
         render()
@@ -164,7 +178,7 @@ class VoiceInputMethodService : android.inputmethodservice.InputMethodService() 
         try {
             client.start()
         } catch (e: Exception) {
-            realtime = null
+            engine = null
             state = State.Idle
             mainHandler.removeCallbacks(tick)
             showError(getString(R.string.voice_error_generic, e.message ?: "WebSocket"))
@@ -172,8 +186,8 @@ class VoiceInputMethodService : android.inputmethodservice.InputMethodService() 
     }
 
     private fun stopRealtime() {
-        val client = realtime ?: return
-        realtime = null
+        val client = engine ?: return
+        engine = null
         mainHandler.removeCallbacks(tick)
         state = State.Recognizing
         render()
@@ -181,14 +195,14 @@ class VoiceInputMethodService : android.inputmethodservice.InputMethodService() 
     }
 
     private fun disposeRealtime() {
-        realtime?.cancel()
-        realtime = null
+        engine?.cancel()
+        engine = null
     }
 
-    private val realtimeCallback = object : RealtimeDictationClient.Callback {
+    private val realtimeCallback = object : DictationEngine.Callback {
         override fun onPartial(text: String) {
             mainHandler.post {
-                if (realtime == null) return@post
+                if (engine == null) return@post
                 currentInputConnection?.setComposingText(text, 1)
                 statusText?.text = text
             }
@@ -206,8 +220,8 @@ class VoiceInputMethodService : android.inputmethodservice.InputMethodService() 
 
         override fun onFailure(message: String) {
             mainHandler.post {
-                if (realtime == null) return@post
-                realtime = null
+                if (engine == null) return@post
+                engine = null
                 mainHandler.removeCallbacks(tick)
                 currentInputConnection?.finishComposingText()
                 state = State.Idle
@@ -218,7 +232,7 @@ class VoiceInputMethodService : android.inputmethodservice.InputMethodService() 
 
         override fun onClosed() {
             mainHandler.post {
-                if (realtime == null && state == State.Recognizing) {
+                if (engine == null && state == State.Recognizing) {
                     state = State.Idle
                     render()
                 }

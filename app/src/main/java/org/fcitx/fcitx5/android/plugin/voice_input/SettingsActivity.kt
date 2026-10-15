@@ -271,7 +271,7 @@ class SettingsActivity : AppCompatActivity() {
                 toast(R.string.voice_error_permission)
                 return
             }
-            if (prefs.model.contains("realtime", ignoreCase = true)) {
+            if (prefs.engineKind() != EngineKind.Sync) {
                 testRealtime(ctx, prefs)
                 return
             }
@@ -303,7 +303,7 @@ class SettingsActivity : AppCompatActivity() {
             val audioReady = java.util.concurrent.CountDownLatch(1)
             val done = java.util.concurrent.CountDownLatch(1)
             var error: String? = null
-            val client = RealtimeDictationClient(prefs, object : RealtimeDictationClient.Callback {
+            val cb = object : DictationEngine.Callback {
                 override fun onPartial(text: String) {
                     lastPartial.set(text)
                     activity?.runOnUiThread {
@@ -325,9 +325,15 @@ class SettingsActivity : AppCompatActivity() {
                 override fun onClosed() {
                     done.countDown()
                 }
-            })
+            }
+            val client: DictationEngine = when (prefs.engineKind()) {
+                EngineKind.CapsWriterRealtime -> CapsWriterDictationClient(prefs, "", cb)
+                else -> RealtimeDictationClient(prefs, "", cb)
+            }
             client.onAudioReady = { audioReady.countDown() }
             toast(R.string.voice_rt_test_hint)
+            // CapsWriter 是分块推理，final 尾片等待更长
+            val finalWait = if (prefs.engineKind() == EngineKind.CapsWriterRealtime) 18L else 8L
             thread(name = "voice-rt-test") {
                 try {
                     client.start()
@@ -335,7 +341,7 @@ class SettingsActivity : AppCompatActivity() {
                     audioReady.await(8, java.util.concurrent.TimeUnit.SECONDS)
                     Thread.sleep(5000L)
                     client.stop()
-                    done.await(8, java.util.concurrent.TimeUnit.SECONDS)
+                    done.await(finalWait, java.util.concurrent.TimeUnit.SECONDS)
                     val msg = error ?: (
                             finals.toString().ifBlank { lastPartial.get() }
                                 .ifBlank { ctx.getString(R.string.voice_empty) })

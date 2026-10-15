@@ -58,13 +58,15 @@ class TranscriptionClient {
     }
 
     fun transcribe(wav: ByteArray, cfg: VoicePrefs, context: List<String> = emptyList()): String {
-        // qwen-audio-*-realtime-* 是纯 WebSocket 实时模型，不支持任何同步 HTTP 转写
-        //（HTTP 调用只会得到 {"status_message":"Success."} 这类回执）
-        if (cfg.model.contains("realtime", ignoreCase = true)) {
+        // 实时渠道（CapsWriter ws:// 或 realtime 模型）不支持同步 HTTP 转写
+        if (cfg.engineKind() != EngineKind.Sync) {
+            val which = if (cfg.engineKind() == EngineKind.CapsWriterRealtime)
+                "CapsWriter 实时渠道（Base URL 为 ws:// 或接口模式选了 capswriter）"
+            else "实时模型「${cfg.model}」"
             throw ApiException(
                 400,
-                "「${cfg.model}」是实时模型：请在语音面板按住麦克风听写（自动启用 WebSocket 实时引擎），" +
-                        "同步整段转写请改用 qwen-audio-3.0-asr-flash"
+                "$which 不支持同步整段转写：请在语音面板按住麦克风实时听写；" +
+                        "如需同步转写请切换方案（如 qwen-audio-3.0-asr-flash / OpenAI /audio/transcriptions）"
             )
         }
         return when (resolveMode(cfg)) {

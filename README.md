@@ -85,6 +85,20 @@ fcitx5-android 的已发布版本内置了语音输入集成机制（`app/.../in
 
 同步（asr-flash）与实时（realtime-plus）两种模型可在「语音方案」里各存一个，随时切换。
 
+### CapsWriter 实时（自建 WebSocket，v3.1 新增）
+支持 [CapsWriter-Offline](docs/第三方WebSocket实时识别接入说明.md) 的实时流式识别（协议细节见该文档）：
+
+- **引擎路由（确定性规则）**：
+  1. Base URL 以 `ws://` / `wss://` 开头 → CapsWriter 实时引擎（直连该地址，无端口则补 6016）；
+  2. 接口模式显式选「CapsWriter 实时」→ 同上（http 地址自动换 scheme，6017→6016）；
+  3. 模型名含 `realtime` → 百炼实时引擎；
+  4. 其余 → 同步转写。
+- 按住说话 = 一个 `task_id`；松开补发 `is_final` 空包，等最终带标点结果（分块推理，尾片最长等 15s）。
+- 上行 float32 LE PCM（内部自动 int16→float32）；`seg_duration=4 / seg_overlap=2`（首条 partial ≈ 8s，属该服务的协议特性，非逐字级实时）。
+- 鉴权：API Key 字段即 `X-CapsWriter-Key`（服务端 `ws_api_key` 为空则不带）；
+  「即时热词/上下文」经 `context` 字段透传。
+- 建议存成独立语音方案（如「本地CapsWriter」），与百炼方案一键互切。
+
 ## 配置项（插件配置页）
 
 | 配置 | 说明 | 默认 |

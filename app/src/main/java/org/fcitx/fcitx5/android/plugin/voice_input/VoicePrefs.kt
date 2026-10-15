@@ -61,6 +61,22 @@ class VoicePrefs(context: Context) {
     /** 是否已具备发起请求的最低配置 */
     fun isConfigured(): Boolean = baseUrl.isNotBlank() && model.isNotBlank()
 
+    /**
+     * 听写引擎路由（确定性规则，见方案约定）：
+     * 1. Base URL 以 ws:// 或 wss:// 开头，或接口模式显式选了 capswriter → CapsWriter 实时；
+     * 2. 模型名含 realtime → 百炼实时（wss 由 https baseUrl 自动推导）；
+     * 3. 其余 → 同步转写（openai / 百炼原生 / 百炼兼容）。
+     */
+    fun engineKind(): EngineKind {
+        val b = baseUrl.lowercase()
+        return when {
+            b.startsWith("ws://") || b.startsWith("wss://") || apiMode == API_MODE_CAPSWRITER ->
+                EngineKind.CapsWriterRealtime
+            model.contains("realtime", ignoreCase = true) -> EngineKind.BailianRealtime
+            else -> EngineKind.Sync
+        }
+    }
+
     companion object {
         const val KEY_BASE_URL = "base_url"
         const val KEY_API_KEY = "api_key"
@@ -77,6 +93,7 @@ class VoicePrefs(context: Context) {
         const val API_MODE_OPENAI = "openai"
         const val API_MODE_DS_NATIVE = "dashscope_native"
         const val API_MODE_DS_COMPAT = "dashscope_compatible"
+        const val API_MODE_CAPSWRITER = "capswriter"
 
         const val DEFAULT_BASE_URL = "https://api.openai.com/v1"
         const val DEFAULT_MODEL = "whisper-1"

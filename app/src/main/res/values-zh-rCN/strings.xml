@@ -87,15 +87,17 @@
     <string name="pref_use_context_title">上下文增强</string>
     <string name="pref_use_context_summary">每次请求附带最近几轮听写结果，提升连贯性与专名召回（百炼原生/兼容模式）</string>
     <string-array name="api_mode_entries">
-        <item>自动识别（百炼域名→原生接口）</item>
+        <item>自动识别（按 URL scheme / 域名）</item>
         <item>OpenAI 兼容（/audio/transcriptions）</item>
         <item>百炼原生（multimodal-generation）</item>
         <item>百炼 OpenAI 兼容（chat/completions）</item>
+        <item>CapsWriter 实时（自建 WebSocket）</item>
     </string-array>
     <string-array name="api_mode_values">
         <item>auto</item>
         <item>openai</item>
         <item>dashscope_native</item>
         <item>dashscope_compatible</item>
+        <item>capswriter</item>
     </string-array>
 </resources>

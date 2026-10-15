@@ -158,15 +158,17 @@
     <string name="pref_use_context_title">Context enhancement</string>
     <string name="pref_use_context_summary">Send recent dictation results with each request for consistency (Bailian native/compatible)</string>
     <string-array name="api_mode_entries">
-        <item>Auto (dashscope domains → Bailian native)</item>
+        <item>Auto (detect by URL scheme / host)</item>
         <item>OpenAI compatible (/audio/transcriptions)</item>
         <item>Bailian native (multimodal-generation)</item>
         <item>Bailian OpenAI-compatible (chat/completions)</item>
+        <item>CapsWriter realtime (self-hosted WebSocket)</item>
     </string-array>
     <string-array name="api_mode_values">
         <item>auto</item>
         <item>openai</item>
         <item>dashscope_native</item>
         <item>dashscope_compatible</item>
+        <item>capswriter</item>
     </string-array>
 </resources>

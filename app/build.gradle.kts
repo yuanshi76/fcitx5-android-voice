@@ -13,8 +13,8 @@ android {
         applicationId = "org.fcitx.fcitx5.android.plugin.voice_input"
         minSdk = 26
         targetSdk = 34
-        versionCode = 1
-        versionName = "0.1.0"
+        versionCode = 3
+        versionName = "3.1"
     }
 
     buildTypes {

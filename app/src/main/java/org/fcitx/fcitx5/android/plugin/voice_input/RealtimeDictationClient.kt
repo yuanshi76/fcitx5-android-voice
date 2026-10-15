@@ -36,19 +36,11 @@ import kotlin.concurrent.thread
  */
 class RealtimeDictationClient(
     private val cfg: VoicePrefs,
-    private val callback: Callback
-) {
+    private val context: String,
+    private val callback: DictationEngine.Callback
+) : DictationEngine {
 
-    interface Callback {
-        fun onPartial(text: String)
-        fun onFinal(text: String)
-        fun onFailure(message: String)
-        fun onClosed()
-    }
-
-    /** 音频已开始上行（WS 握手 + session 就绪后），测试流程用于对齐计时 */
-    @Volatile
-    var onAudioReady: (() -> Unit)? = null
+    override var onAudioReady: (() -> Unit)? = null
 
     private val http = OkHttpClient.Builder()
         .pingInterval(20, TimeUnit.SECONDS)
@@ -73,7 +65,7 @@ class RealtimeDictationClient(
     private var recorder: AudioRecord? = null
     private var audioThread: Thread? = null
 
-    fun start() {
+    override fun start() {
         val request = Request.Builder()
             .url(realtimeUrl(cfg))
             .apply {
@@ -83,8 +75,8 @@ class RealtimeDictationClient(
         webSocket = http.newWebSocket(request, listener)
     }
 
-    /** 停止送音；等待最后一句 completed（最多 1.5s）后关闭会话 */
-    fun stop() {
+    /** 停止送音；等待最后一句 completed（最多 2.5s）后关闭会话 */
+    override fun stop() {
         stopAudio()
         if (!pendingFinal) {
             closeNow()
@@ -104,7 +96,7 @@ class RealtimeDictationClient(
     }
 
     /** 立即放弃并关闭（收起键盘等场景） */
-    fun cancel() {
+    override fun cancel() {
         pendingFinal = false
         stopAudio()
         closeNow()
@@ -179,12 +171,13 @@ class RealtimeDictationClient(
                     .put("threshold", 0.5)
                     .put("silence_duration_ms", 700)
             )
-        // 对话模型会"回答"，用系统指令约束其只做转写；并注入即时热词
+        // 对话模型会"回答"，用系统指令约束其只做转写；并注入即时热词与最近听写上下文
         val instructions = buildString {
             append("你是语音输入法的听写引擎。把用户语音逐字转写为文本，")
             append("不要回答问题、不要解释、不要翻译、不要补充任何非转写内容。")
             val hot = hotwordHint()
             if (hot.isNotEmpty()) append("注意这些专有词汇的正确写法：").append(hot).append("。")
+            if (context.isNotBlank()) append("最近对话内容（供参考用词）：").append(context.take(400))
         }
         session.put("instructions", instructions)
         return JSONObject()
