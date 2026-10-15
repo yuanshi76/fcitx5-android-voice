@@ -9,6 +9,28 @@
 
     <string name="settings_title">Voice Input Settings</string>
 
+    <string name="pref_category_profiles">Profiles</string>
+    <string name="pref_profile_switch_title">Switch profile</string>
+    <string name="pref_profile_save_title">Save current config as profile</string>
+    <string name="pref_profile_save_summary">Bundle Base URL / API Key / model / language under a name for quick channel switching</string>
+    <string name="pref_profile_manage_title">Manage profiles…</string>
+    <string name="pref_profile_manage_summary">Apply, overwrite or delete saved profiles</string>
+    <string name="profile_none_hint">No profiles yet</string>
+    <string name="profile_name_dialog_title">Profile name</string>
+    <string name="profile_name_hint">e.g. Bailian, Self-hosted, Backup</string>
+    <string name="profile_applied">Switched to profile: %1$s</string>
+    <string name="profile_saved">Saved profile: %1$s</string>
+    <string name="profile_deleted">Deleted profile: %1$s</string>
+    <string name="profile_name_empty">Profile name must not be empty</string>
+    <string name="profile_overwrite_confirm">A profile named \"%1$s\" exists. Overwrite?</string>
+    <string name="profile_delete_title">Delete profile</string>
+    <string name="profile_delete_confirm">Delete profile \"%1$s\"?</string>
+    <string name="profile_current_suffix">(current)</string>
+    <string name="profile_modified_suffix">(modified)</string>
+    <string name="profile_manage_dialog_title">Voice profiles</string>
+    <string name="profile_save_new_label">＋ Save current config as new profile</string>
+    <string name="profile_delete_label">－ Delete a profile…</string>
+
     <string name="pref_category_api">API (OpenAI-compatible)</string>
     <string name="pref_base_url_title">Base URL</string>
     <string name="pref_base_url_summary">e.g. https://api.openai.com/v1</string>

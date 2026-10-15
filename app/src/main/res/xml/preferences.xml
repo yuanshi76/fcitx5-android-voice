@@ -4,6 +4,30 @@
     android:title="@string/settings_title">
 
     <PreferenceCategory
+        android:title="@string/pref_category_profiles"
+        app:iconSpaceReserved="false">
+
+        <ListPreference
+            app:key="profile_switch"
+            app:title="@string/pref_profile_switch_title"
+            app:dialogTitle="@string/pref_profile_switch_title"
+            app:iconSpaceReserved="false" />
+
+        <Preference
+            app:key="profile_save"
+            app:title="@string/pref_profile_save_title"
+            app:summary="@string/pref_profile_save_summary"
+            app:iconSpaceReserved="false" />
+
+        <Preference
+            app:key="profile_manage"
+            app:title="@string/pref_profile_manage_title"
+            app:summary="@string/pref_profile_manage_summary"
+            app:iconSpaceReserved="false" />
+
+    </PreferenceCategory>
+
+    <PreferenceCategory
         android:title="@string/pref_category_api"
         app:iconSpaceReserved="false">
 

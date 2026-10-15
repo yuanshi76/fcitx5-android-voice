@@ -21,9 +21,11 @@ fcitx5-android 的已发布版本内置了语音输入集成机制（`app/.../in
    `android:imeSubtypeMode="voice"`。
 3. 在主程序中开启「键盘设置 → 显示语音输入按钮」并首选本语音输入法后，
    **fcitx5 键盘工具栏上会出现麦克风图标**；点击即切换到本插件输入法。
-4. 切换到本输入法后（默认自动开始）录音，16 kHz 单声道 PCM 封装为 WAV，
-   调用 OpenAI 兼容接口转写，识别文本经 `InputConnection.commitText()` 直接上屏到当前应用输入框。
-5. 识别完成可自动切回 fcitx5 输入法（配置项）。
+4. 进入语音界面后**按住**中央麦克风按钮开始录音（16 kHz 单声道 PCM 封装为 WAV），
+   **松开**即调用 OpenAI 兼容接口转写，识别文本经 `InputConnection.commitText()` 上屏；
+   识别完成后停留在语音界面，可连续听写。
+5. 用户收起输入窗口时（`onWindowHidden`）自动把当前输入法还原为 fcitx5，
+   并修复/沿用其动态子类型（避免被打回英文键盘，配置项）。
 
 ```
 ┌───────────────────────────┐        ┌──────────────────────────────┐
@@ -51,13 +53,21 @@ fcitx5-android 的已发布版本内置了语音输入集成机制（`app/.../in
 
 | 配置 | 说明 | 默认 |
 |---|---|---|
+| **语音方案** | 将 Base URL + API Key + 模型 + 语言打包命名，多渠道一键切换 | — |
 | Base URL | OpenAI 兼容根地址（含 `/v1`） | `https://api.openai.com/v1` |
 | API Key | Bearer Token | 空 |
 | 模型名称 | 传给转写接口 | `whisper-1` |
 | 识别语言 | `auto` 或 zh/en/ja/ko/yue | auto |
-| 切换后立即录音 | 点击 🎤 即开始录音 | 开 |
-| 上屏后返回 fcitx5 | 自动切回主程序输入法 | 开 |
+| 收起键盘后返回 fcitx5 | 下次唤起键盘回到 fcitx5（含子类型修复） | 开 |
 | 测试连接 | 录 2 秒真实转写一次 | — |
+
+### 语音方案（Profile）
+
+渠道多、经常需要换 Base URL / Key / 模型时：
+- 「保存当前配置为方案」→ 起个名字（如 `百炼`、`自建GPU`）；
+- 「切换方案」下拉直接应用整套配置，识别请求立即走新渠道；
+- 「管理方案…」可应用 / 另存 / 覆盖 / 删除；
+- 当前方案名旁会显示 `（当前）`，手动改过配置后显示 `（已修改）` 提示可覆盖保存。
 
 ## 目录结构
 
@@ -69,11 +79,12 @@ fcitx5-android-voice/
 │       ├── AndroidManifest.xml       # 输入法服务 + SettingsActivity（含 MANIFEST intent-filter）+ 权限
 │       ├── assets/descriptor.json    # 插件规范的（空）数据层级描述符
 │       ├── java/org/fcitx/fcitx5/android/plugin/voice_input/
-│       │   ├── VoiceInputMethodService.kt  # 输入法主体：录音→转写→上屏→切回
+│       │   ├── VoiceInputMethodService.kt  # 输入法主体：按住说话→转写→上屏
 │       │   ├── WavRecorder.kt              # AudioRecord→WAV（16k/mono/16bit）
 │       │   ├── TranscriptionClient.kt      # OpenAI 兼容 multipart 转写客户端
 │       │   ├── VoicePrefs.kt               # 配置存取（SharedPreferences）
-│       │   └── SettingsActivity.kt         # 插件配置页（权限/测试连接/启用输入法）
+│       │   ├── ProfileStore.kt             # 命名方案（多渠道配置打包切换）存储
+│       │   └── SettingsActivity.kt         # 插件配置页（方案/权限/测试连接）
 │       └── res/
 │           ├── xml/method.xml        # 输入法元数据：imeSubtypeMode="voice"（🎤图标的关键）
 │           ├── xml/plugin.xml        # fcitx5 插件描述符（apiVersion 0.1）
