@@ -248,24 +248,42 @@ class TranscriptionClient {
         return if (native) parseDashScopeNative(resp) else parseChatCompletion(resp)
     }
 
-    /** 原生响应：output.choices[0].message.content 是 [{text:...}] 数组 */
+    /**
+     * 原生响应，兼容两种结构族：
+     * - qwen-asr 族：output.choices[0].message.content[].text
+     * - fun-asr / qwen-audio-3.0-asr-flash 族：output.text（全文）、output.sentence（对象或数组）
+     */
     private fun parseDashScopeNative(body: String): String {
         val root = JSONObject(body)
         // 网关可能在 HTTP 200 里返回业务错误（{"code":"...","message":"..."}），不要吞掉
         requireNoGatewayError(root, body)
         val output = root.optJSONObject("output")
             ?: throw IllegalStateException("响应缺少 output 字段: ${body.take(200)}")
-        val choices = output.optJSONArray("choices")
-        if (choices == null || choices.length() == 0)
-            throw IllegalStateException("响应缺少识别结果: ${body.take(200)}")
-        val content = choices.getJSONObject(0)
-            .optJSONObject("message")?.opt("content")
-        return when (content) {
-            is JSONArray -> (0 until content.length())
-                .joinToString("") { content.optJSONObject(it)?.optString("text", "") ?: "" }
-            is String -> content
-            else -> ""
+
+        // 1) choices 结构
+        output.optJSONArray("choices")?.takeIf { it.length() > 0 }?.let { choices ->
+            val content = choices.getJSONObject(0).optJSONObject("message")?.opt("content")
+            val text = when (content) {
+                is JSONArray -> (0 until content.length())
+                    .joinToString("") { content.optJSONObject(it)?.optString("text", "") ?: "" }
+                is String -> content
+                else -> ""
+            }
+            if (text.isNotBlank()) return text
         }
+        // 2) output.text 顶层全文
+        output.optString("text", "").takeIf { it.isNotBlank() }?.let { return it }
+        // 3) output.sentence（对象或数组）
+        when (val s = output.opt("sentence")) {
+            is JSONObject ->
+                s.optString("text", "").takeIf { it.isNotBlank() }?.let { return it }
+            is JSONArray -> {
+                val joined = (0 until s.length())
+                    .joinToString("") { s.optJSONObject(it)?.optString("text", "") ?: "" }
+                if (joined.isNotBlank()) return joined
+            }
+        }
+        throw IllegalStateException("响应中未找到识别文本: ${body.take(200)}")
     }
 
     /** chat/completions 响应：choices[0].message.content 是字符串 */
