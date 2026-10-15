@@ -47,10 +47,11 @@ class TranscriptionClient {
         else -> {
             val b = cfg.baseUrl.lowercase()
             when {
-                // Token Plan 网关主打 OpenAI 兼容接口，优先走 chat/completions
-                b.contains("token-plan") -> Mode.DashScopeCompatible
+                // 百炼系：走 OpenAI 兼容 chat/completions（官方文档明确该路径支持
+                // base64 Data URI；原生 multimodal-generation REST 只收音频 URL，
+                // 传 base64 会报 InvalidParameter: url error）
                 b.contains("maas.aliyuncs.com") || b.contains("dashscope.aliyuncs.com") ->
-                    Mode.DashScopeNative
+                    Mode.DashScopeCompatible
                 else -> Mode.OpenAi
             }
         }
