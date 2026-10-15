@@ -46,9 +46,13 @@ class TranscriptionClient {
         VoicePrefs.API_MODE_DS_COMPAT -> Mode.DashScopeCompatible
         else -> {
             val b = cfg.baseUrl.lowercase()
-            if (b.contains("maas.aliyuncs.com") || b.contains("dashscope.aliyuncs.com"))
-                Mode.DashScopeNative
-            else Mode.OpenAi
+            when {
+                // Token Plan 网关主打 OpenAI 兼容接口，优先走 chat/completions
+                b.contains("token-plan") -> Mode.DashScopeCompatible
+                b.contains("maas.aliyuncs.com") || b.contains("dashscope.aliyuncs.com") ->
+                    Mode.DashScopeNative
+                else -> Mode.OpenAi
+            }
         }
     }
 
@@ -235,9 +239,14 @@ class TranscriptionClient {
 
     /** 原生响应：output.choices[0].message.content 是 [{text:...}] 数组 */
     private fun parseDashScopeNative(body: String): String {
-        val output = JSONObject(body).optJSONObject("output") ?: return ""
-        val choices = output.optJSONArray("choices") ?: return ""
-        if (choices.length() == 0) return ""
+        val root = JSONObject(body)
+        // 网关可能在 HTTP 200 里返回业务错误（{"code":"...","message":"..."}），不要吞掉
+        requireNoGatewayError(root, body)
+        val output = root.optJSONObject("output")
+            ?: throw IllegalStateException("响应缺少 output 字段: ${body.take(200)}")
+        val choices = output.optJSONArray("choices")
+        if (choices == null || choices.length() == 0)
+            throw IllegalStateException("响应缺少识别结果: ${body.take(200)}")
         val content = choices.getJSONObject(0)
             .optJSONObject("message")?.opt("content")
         return when (content) {
@@ -250,10 +259,23 @@ class TranscriptionClient {
 
     /** chat/completions 响应：choices[0].message.content 是字符串 */
     private fun parseChatCompletion(body: String): String {
-        val choices = JSONObject(body).optJSONArray("choices") ?: return ""
-        if (choices.length() == 0) return ""
+        val root = JSONObject(body)
+        requireNoGatewayError(root, body)
+        val choices = root.optJSONArray("choices")
+        if (choices == null || choices.length() == 0)
+            throw IllegalStateException("响应缺少 choices 字段: ${body.take(200)}")
         return choices.getJSONObject(0)
             .optJSONObject("message")?.optString("content", "") ?: ""
+    }
+
+    /** HTTP 200 但 body 带网关错误码时，抛出可读异常 */
+    private fun requireNoGatewayError(root: JSONObject, body: String) {
+        val code = root.optString("code", "")
+        if (code.isNotEmpty() && !root.has("output") && !root.has("choices")) {
+            val message = root.optString("message", "")
+            throw ApiException(200, listOf(code, message).filter { it.isNotEmpty() }
+                .joinToString(": ").ifEmpty { "响应异常: ${body.take(200)}" })
+        }
     }
 
     // ---------- HTTP 公共部分 ----------
