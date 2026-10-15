@@ -66,6 +66,16 @@
             app:useSimpleSummaryProvider="true"
             app:iconSpaceReserved="false" />
 
+        <ListPreference
+            app:key="api_mode"
+            app:title="@string/pref_api_mode_title"
+            app:summary="@string/pref_api_mode_summary"
+            app:entries="@array/api_mode_entries"
+            app:entryValues="@array/api_mode_values"
+            app:defaultValue="auto"
+            app:useSimpleSummaryProvider="true"
+            app:iconSpaceReserved="false" />
+
     </PreferenceCategory>
 
     <PreferenceCategory

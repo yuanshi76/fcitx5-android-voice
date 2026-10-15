@@ -32,6 +32,10 @@ class VoicePrefs(context: Context) {
     val language: String
         get() = prefs.getString(KEY_LANGUAGE, "auto")!!
 
+    /** 接口模式：auto / openai / dashscope_native / dashscope_compatible */
+    val apiMode: String
+        get() = prefs.getString(KEY_API_MODE, API_MODE_AUTO)!!
+
     val autoReturn: Boolean
         get() = prefs.getBoolean(KEY_AUTO_RETURN, true)
 
@@ -43,7 +47,13 @@ class VoicePrefs(context: Context) {
         const val KEY_API_KEY = "api_key"
         const val KEY_MODEL = "model"
         const val KEY_LANGUAGE = "language"
+        const val KEY_API_MODE = "api_mode"
         const val KEY_AUTO_RETURN = "auto_return_fcitx"
+
+        const val API_MODE_AUTO = "auto"
+        const val API_MODE_OPENAI = "openai"
+        const val API_MODE_DS_NATIVE = "dashscope_native"
+        const val API_MODE_DS_COMPAT = "dashscope_compatible"
 
         const val DEFAULT_BASE_URL = "https://api.openai.com/v1"
         const val DEFAULT_MODEL = "whisper-1"

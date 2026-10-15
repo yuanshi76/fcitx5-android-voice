@@ -15,7 +15,8 @@ data class VoiceProfile(
     val baseUrl: String,
     val apiKey: String,
     val model: String,
-    val language: String
+    val language: String,
+    val apiMode: String
 )
 
 /**
@@ -39,7 +40,9 @@ class ProfileStore(context: Context) {
                     baseUrl = o.optString("baseUrl"),
                     apiKey = o.optString("apiKey"),
                     model = o.optString("model"),
-                    language = o.optString("language")
+                    language = o.optString("language"),
+                    apiMode = o.optString("apiMode", VoicePrefs.API_MODE_AUTO)
+                        .ifEmpty { VoicePrefs.API_MODE_AUTO }
                 )
             }
         }.getOrDefault(emptyList())
@@ -55,6 +58,7 @@ class ProfileStore(context: Context) {
                     .put("apiKey", p.apiKey)
                     .put("model", p.model)
                     .put("language", p.language)
+                    .put("apiMode", p.apiMode)
             )
         }
         prefs.edit().putString(KEY, arr.toString()).apply()
@@ -83,6 +87,7 @@ class ProfileStore(context: Context) {
             .putString(VoicePrefs.KEY_API_KEY, p.apiKey)
             .putString(VoicePrefs.KEY_MODEL, p.model)
             .putString(VoicePrefs.KEY_LANGUAGE, p.language)
+            .putString(VoicePrefs.KEY_API_MODE, p.apiMode)
             .putString(KEY_ACTIVE, name)
             .apply()
         return true
@@ -90,7 +95,7 @@ class ProfileStore(context: Context) {
 
     /** 以当前配置内容创建/覆盖方案，并设为活动方案 */
     fun saveCurrentAs(name: String, cfg: VoicePrefs): VoiceProfile {
-        val p = VoiceProfile(name, cfg.baseUrl, cfg.apiKey, cfg.model, cfg.language)
+        val p = VoiceProfile(name, cfg.baseUrl, cfg.apiKey, cfg.model, cfg.language, cfg.apiMode)
         put(p)
         prefs.edit().putString(KEY_ACTIVE, name).apply()
         return p

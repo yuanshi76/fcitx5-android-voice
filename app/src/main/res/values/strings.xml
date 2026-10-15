@@ -93,4 +93,19 @@
         <item>ko</item>
         <item>yue</item>
     </string-array>
+
+    <string name="pref_api_mode_title">API mode</string>
+    <string name="pref_api_mode_summary">How to call the transcription endpoint (auto-detect by URL)</string>
+    <string-array name="api_mode_entries">
+        <item>Auto (dashscope domains → Bailian native)</item>
+        <item>OpenAI compatible (/audio/transcriptions)</item>
+        <item>Bailian native (multimodal-generation)</item>
+        <item>Bailian OpenAI-compatible (chat/completions)</item>
+    </string-array>
+    <string-array name="api_mode_values">
+        <item>auto</item>
+        <item>openai</item>
+        <item>dashscope_native</item>
+        <item>dashscope_compatible</item>
+    </string-array>
 </resources>

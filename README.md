@@ -38,16 +38,32 @@ fcitx5-android 的已发布版本内置了语音输入集成机制（`app/.../in
 └───────────────────────────┘        └──────────────────────────────┘
 ```
 
-## API 接口设计（OpenAI 兼容）
+## API 接口设计（「接口模式」配置项，支持三种）
 
-- `POST {baseUrl}/audio/transcriptions`
-- Header：`Authorization: Bearer {api_key}`（留空则不带）
-- `multipart/form-data` 字段：
-  - `file`：`voice.wav`，`audio/wav`（16 kHz、16-bit、单声道 PCM WAV）
-  - `model`：用户配置（默认 `whisper-1`）
-  - `language`：仅在非 `auto` 时发送（OpenAI 语言代码，如 `zh`、`en`）
-  - `response_format`：`json`
-- 响应解析：取 JSON 的 `text` 字段（兼容 `verbose_json`；部分兼容实现返回纯文本亦兼容）。
+### 1. OpenAI 兼容（openai）
+- `POST {baseUrl}/audio/transcriptions`，`multipart/form-data`：
+  `file`（16 kHz/16-bit/mono WAV）、`model`、`language`（非 auto 时）、`response_format=json`
+- 响应取 JSON `text` 字段。适用于 OpenAI Whisper 及一切兼容实现。
+
+### 2. 阿里云百炼原生（dashscope_native）—— Token Plan / qwen-audio-asr 系列
+- `POST {root}/api/v1/services/aigc/multimodal-generation/generation`
+- Header：`Authorization: Bearer {api_key}`、`X-DashScope-SSE: disable`
+- JSON body：
+  ```json
+  {"model":"qwen-audio-3.0-asr-flash",
+   "input":{"messages":[{"role":"user","content":[
+     {"type":"input_audio","input_audio":{"data":"data:audio/wav;base64,<…>"}}]}]},
+   "parameters":{"format":"wav","sample_rate":"16000"}}
+  ```
+- 响应取 `output.choices[0].message.content[].text`。
+- Base URL 填到根域名或 `/api/v1` 均可，插件自动补全路径。
+
+### 3. 百炼 OpenAI 兼容（dashscope_compatible）
+- `POST {root}/compatible-mode/v1/chat/completions`，`input_audio.data` 传 base64 Data URL，
+  响应取 `choices[0].message.content`。若原生接口拒绝 base64 可切到此模式。
+
+**auto（默认）**：Base URL 含 `maas.aliyuncs.com` / `dashscope.aliyuncs.com` 时走百炼原生，否则走 OpenAI 模式。
+接口模式随「语音方案」一起保存与切换。
 
 ## 配置项（插件配置页）
 

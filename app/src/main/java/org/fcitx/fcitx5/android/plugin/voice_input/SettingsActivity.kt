@@ -129,7 +129,8 @@ class SettingsActivity : AppCompatActivity() {
 
         private fun isActiveModified(p: VoiceProfile): Boolean =
             p.baseUrl != cfg.baseUrl || p.apiKey != cfg.apiKey ||
-                    p.model != cfg.model || p.language != cfg.language
+                    p.model != cfg.model || p.language != cfg.language ||
+                    p.apiMode != cfg.apiMode
 
         /** 方案应用/另存后，把值同步回可见的配置控件 */
         private fun syncConfigUi() {
@@ -137,6 +138,7 @@ class SettingsActivity : AppCompatActivity() {
             findPreference<EditTextPreference>("api_key")?.text = cfg.apiKey
             findPreference<EditTextPreference>("model")?.text = cfg.model
             findPreference<ListPreference>("language")?.value = cfg.language
+            findPreference<ListPreference>("api_mode")?.value = cfg.apiMode
         }
 
         private fun promptSaveProfile() {
