@@ -47,22 +47,32 @@ class TranscriptionClient {
         else -> {
             val b = cfg.baseUrl.lowercase()
             when {
-                // 百炼系：走 OpenAI 兼容 chat/completions（官方文档明确该路径支持
-                // base64 Data URI；原生 multimodal-generation REST 只收音频 URL，
-                // 传 base64 会报 InvalidParameter: url error）
+                // 百炼系：qwen-audio-3.0-asr-flash 走原生 multimodal-generation REST
+                //（官方 fun-asr-flash HTTP 文档确认支持 data:audio/wav;base64 输入）。
+                // 注意：此前的 "url error" 实为路径拼接 bug（已修），并非原生拒收 base64。
                 b.contains("maas.aliyuncs.com") || b.contains("dashscope.aliyuncs.com") ->
-                    Mode.DashScopeCompatible
+                    Mode.DashScopeNative
                 else -> Mode.OpenAi
             }
         }
     }
 
-    fun transcribe(wav: ByteArray, cfg: VoicePrefs, context: List<String> = emptyList()): String =
-        when (resolveMode(cfg)) {
+    fun transcribe(wav: ByteArray, cfg: VoicePrefs, context: List<String> = emptyList()): String {
+        // qwen-audio-*-realtime-* 是纯 WebSocket 实时模型，不支持任何同步 HTTP 转写
+        //（HTTP 调用只会得到 {"status_message":"Success."} 这类回执）
+        if (cfg.model.contains("realtime", ignoreCase = true)) {
+            throw ApiException(
+                400,
+                "「${cfg.model}」是实时语音对话模型（WebSocket），不能用于当前同步语音输入；" +
+                        "非实时识别请改用 qwen-audio-3.0-asr-flash（实时听写功能将在下一版本支持）"
+            )
+        }
+        return when (resolveMode(cfg)) {
             Mode.OpenAi -> transcribeOpenAi(wav, cfg, context)
             Mode.DashScopeNative -> transcribeDashScope(wav, cfg, native = true, context)
             Mode.DashScopeCompatible -> transcribeDashScope(wav, cfg, native = false, context)
         }
+    }
 
     // ---------- 热词 / 语言辅助 ----------
 
