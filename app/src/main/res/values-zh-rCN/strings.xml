@@ -75,6 +75,13 @@
 
     <string name="pref_api_mode_title">接口模式</string>
     <string name="pref_api_mode_summary">选择转写接口的调用方式（auto 按 URL 自动识别）</string>
+    <string name="pref_hotwords_title">即时热词</string>
+    <string name="pref_hotwords_summary">让识别更倾向特定词汇（百炼 qwen-audio-3.0-asr-flash 支持）</string>
+    <string name="pref_hotwords_dialog">逗号分隔，可带权重 1–5 或 50（超级热词）：马永泽,张三:5,通义:50。OpenAI 渠道会作为 prompt 提示传入。</string>
+    <string name="pref_vocab_id_title">预编译热词表 ID</string>
+    <string name="pref_vocab_id_summary">可选，百炼 createVocabulary 生成的 vocabulary_id</string>
+    <string name="pref_use_context_title">上下文增强</string>
+    <string name="pref_use_context_summary">每次请求附带最近几轮听写结果，提升连贯性与专名召回（百炼原生/兼容模式）</string>
     <string-array name="api_mode_entries">
         <item>自动识别（百炼域名→原生接口）</item>
         <item>OpenAI 兼容（/audio/transcriptions）</item>

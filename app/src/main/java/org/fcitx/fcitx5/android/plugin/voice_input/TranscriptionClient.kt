@@ -52,20 +52,44 @@ class TranscriptionClient {
         }
     }
 
-    fun transcribe(wav: ByteArray, cfg: VoicePrefs): String = when (resolveMode(cfg)) {
-        Mode.OpenAi -> transcribeOpenAi(wav, cfg)
-        Mode.DashScopeNative -> transcribeDashScope(wav, cfg, native = true)
-        Mode.DashScopeCompatible -> transcribeDashScope(wav, cfg, native = false)
+    fun transcribe(wav: ByteArray, cfg: VoicePrefs, context: List<String> = emptyList()): String =
+        when (resolveMode(cfg)) {
+            Mode.OpenAi -> transcribeOpenAi(wav, cfg, context)
+            Mode.DashScopeNative -> transcribeDashScope(wav, cfg, native = true, context)
+            Mode.DashScopeCompatible -> transcribeDashScope(wav, cfg, native = false, context)
+        }
+
+    // ---------- 热词 / 语言辅助 ----------
+
+    /** 解析 "马永泽,张三:5,李四:50" -> {"马永泽":3,"张三":5,"李四":50}（无权重默认3） */
+    private fun parseHotwords(raw: String): JSONObject? {
+        if (raw.isBlank()) return null
+        val obj = JSONObject()
+        raw.split(Regex("[,，;；\\n]+")).map { it.trim() }.filter { it.isNotEmpty() }.forEach { token ->
+            val idx = token.lastIndexOf(':')
+            if (idx > 0 && idx < token.length - 1) {
+                val word = token.substring(0, idx).trim()
+                val weight = token.substring(idx + 1).trim().toIntOrNull() ?: 3
+                if (word.isNotEmpty()) obj.put(word, weight.coerceIn(1, 50))
+            } else {
+                obj.put(token, 3)
+            }
+        }
+        return if (obj.length() == 0) null else obj
     }
+
+    /** 语言配置 -> language_hints 数组（auto 时不传） */
+    private fun languageHints(cfg: VoicePrefs): JSONArray? =
+        if (cfg.language == "auto") null else JSONArray().put(cfg.language)
 
     // ---------- OpenAI multipart ----------
 
-    private fun transcribeOpenAi(wav: ByteArray, cfg: VoicePrefs): String {
+    private fun transcribeOpenAi(wav: ByteArray, cfg: VoicePrefs, context: List<String>): String {
         val endpoint = cfg.baseUrl.let {
             if (it.endsWith("/audio/transcriptions")) it else "$it/audio/transcriptions"
         }
         val boundary = "----Fcitx5Voice${System.nanoTime()}"
-        val body = buildMultipart(boundary, wav, cfg)
+        val body = buildMultipart(boundary, wav, cfg, context)
         val resp = httpPost(
             endpoint, "multipart/form-data; boundary=$boundary", body, cfg.apiKey, null
         )
@@ -78,7 +102,9 @@ class TranscriptionClient {
         }
     }
 
-    private fun buildMultipart(boundary: String, wav: ByteArray, cfg: VoicePrefs): ByteArray {
+    private fun buildMultipart(
+        boundary: String, wav: ByteArray, cfg: VoicePrefs, context: List<String>
+    ): ByteArray {
         val out = ByteArrayOutputStream()
         fun w(s: String) = out.write(s.toByteArray(Charsets.UTF_8))
         fun field(name: String, value: String) {
@@ -94,6 +120,16 @@ class TranscriptionClient {
         field("model", cfg.model)
         if (cfg.language != "auto") field("language", cfg.language)
         field("response_format", "json")
+        // OpenAI 无原生热词：把热词与最近上下文塞进 prompt 字段（官方推荐的提示途径）
+        val hotwordList = parseHotwords(cfg.hotwords)?.let { vo ->
+            vo.keys().asSequence().toList().joinToString("、")
+        }
+        val prompt = buildList {
+            if (!hotwordList.isNullOrBlank()) add("热词: $hotwordList")
+            if (cfg.useContext && context.isNotEmpty())
+                add("上下文: ${context.drop((context.size - 3).coerceAtLeast(0)).joinToString(" ")}")
+        }.joinToString("\n")
+        if (prompt.isNotEmpty()) field("prompt", prompt.take(800))
         w("--$boundary--\r\n")
         return out.toByteArray()
     }
@@ -103,7 +139,9 @@ class TranscriptionClient {
     private fun dashScopeDataUrl(wav: ByteArray): String =
         "data:audio/wav;base64," + Base64.encodeToString(wav, Base64.NO_WRAP)
 
-    private fun transcribeDashScope(wav: ByteArray, cfg: VoicePrefs, native: Boolean): String {
+    private fun transcribeDashScope(
+        wav: ByteArray, cfg: VoicePrefs, native: Boolean, context: List<String>
+    ): String {
         val endpoint = if (native) {
             val b = cfg.baseUrl
             when {
@@ -129,22 +167,46 @@ class TranscriptionClient {
             .put("role", "user")
             .put("content", JSONArray().put(audioPart))
 
+        // 上下文增强：最近几轮识别结果作为 input_text 消息，音频消息必须放最后
+        //（官方约束：上下文消息各最多 5 条，每轮文本总长 ≤400 字符）
+        val messages = JSONArray()
+        if (cfg.useContext) {
+            context.drop((context.size - 5).coerceAtLeast(0)).forEach { prev ->
+                messages.put(
+                    JSONObject()
+                        .put("role", "user")
+                        .put("content", JSONArray().put(
+                            JSONObject()
+                                .put("type", "input_text")
+                                .put("text", prev.take(400))
+                        ))
+                )
+            }
+        }
+        messages.put(userMsg)
+
         val json = if (native) {
             JSONObject()
                 .put("model", cfg.model)
-                .put("input", JSONObject().put("messages", JSONArray().put(userMsg)))
+                .put("input", JSONObject().put("messages", messages))
                 .put("parameters", JSONObject()
                     .put("format", "wav")
-                    .put("sample_rate", VoicePrefs.SAMPLE_RATE.toString()))
+                    .put("sample_rate", VoicePrefs.SAMPLE_RATE.toString())
+                    .apply {
+                        languageHints(cfg)?.let { put("language_hints", it) }
+                        // 即时热词仅 qwen-audio-3.0-asr-flash 支持
+                        parseHotwords(cfg.hotwords)?.let { put("vocabulary", it) }
+                        if (cfg.vocabularyId.isNotEmpty()) put("vocabulary_id", cfg.vocabularyId)
+                    })
         } else {
             JSONObject()
                 .put("model", cfg.model)
-                .put("messages", JSONArray().put(userMsg))
+                .put("messages", messages)
                 .put("stream", false)
                 .apply {
-                    if (cfg.language != "auto") {
-                        put("asr_options", JSONObject().put("language", cfg.language))
-                    }
+                    val asrOptions = JSONObject()
+                    if (cfg.language != "auto") asrOptions.put("language", cfg.language)
+                    if (asrOptions.length() > 0) put("asr_options", asrOptions)
                 }
         }
 

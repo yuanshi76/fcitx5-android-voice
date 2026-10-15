@@ -45,6 +45,9 @@ class VoiceInputMethodService : android.inputmethodservice.InputMethodService() 
     private var state = State.Idle
     private var recordSeconds = 0
 
+    /** 本会话最近的识别结果，作为上下文随下一次请求发送（最多 5 条） */
+    private val recentCommits = ArrayDeque<String>()
+
     private var statusText: TextView? = null
     private var micButton: ImageButton? = null
 
@@ -163,14 +166,20 @@ class VoiceInputMethodService : android.inputmethodservice.InputMethodService() 
         }
         state = State.Recognizing
         render()
+        val contextSnapshot = synchronized(recentCommits) { recentCommits.toList() }
         thread(name = "voice-transcribe") {
             try {
-                val text = client.transcribe(wav, prefs)
+                val text = client.transcribe(wav, prefs, contextSnapshot)
                 mainHandler.post { onResult(text) }
             } catch (e: Exception) {
                 Log.w(TAG, "transcription failed", e)
                 val msg = when {
-                    e is TranscriptionClient.ApiException && e.code == 401 -> "401 Unauthorized（检查 API Key）"
+                    e is TranscriptionClient.ApiException -> when (e.code) {
+                        401, 403 -> "401/403 API Key 无效或未授权"
+                        404 -> "404 接口路径或模型不存在（检查 Base URL / 模型名）"
+                        429 -> "429 请求过于频繁，稍后再试"
+                        else -> e.message ?: "HTTP ${e.code}"
+                    }
                     e is java.net.UnknownHostException -> "无法解析 ${prefs.baseUrl}"
                     e is java.net.SocketTimeoutException -> "请求超时"
                     else -> e.message ?: e.javaClass.simpleName
@@ -193,6 +202,12 @@ class VoiceInputMethodService : android.inputmethodservice.InputMethodService() 
         }
         currentInputConnection?.commitText(text, 1)
         statusText?.text = getString(R.string.voice_committed)
+        if (prefs.useContext) {
+            synchronized(recentCommits) {
+                recentCommits.addLast(text)
+                while (recentCommits.size > 5) recentCommits.removeFirst()
+            }
+        }
         // 识别完成后继续停留在语音界面，便于连续听写；
         // 回到 fcitx5 键盘的时机在 onWindowHidden（用户收起键盘时）
     }

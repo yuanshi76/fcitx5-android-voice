@@ -3,6 +3,13 @@ build/
 local.properties
 *.jks
 *.keystore
+
+# 百炼 SDK 资料：只保留 markdown 文档，不入库大体积二进制（aar/so/apk/zip/模型）
+docs/V2.7.4-049-20260907_Android_TLS/
+docs/._*
+**/._*
+*.aar
+*.tar.gz
 *.iml
 .idea/
 .DS_Store

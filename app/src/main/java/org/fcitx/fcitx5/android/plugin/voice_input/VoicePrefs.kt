@@ -36,6 +36,21 @@ class VoicePrefs(context: Context) {
     val apiMode: String
         get() = prefs.getString(KEY_API_MODE, API_MODE_AUTO)!!
 
+    /**
+     * 即时热词（仅 qwen-audio-3.0-asr-flash 支持）：逗号分隔，可带权重 "马永泽,张三:5,李四:50"。
+     * 权重 [1,5] 越大越倾向输出该词；50 为超级热词（最多 50 个）。
+     */
+    val hotwords: String
+        get() = prefs.getString(KEY_HOTWORDS, "")!!.trim()
+
+    /** 预编译热词列表 ID（百炼 createVocabulary 生成，可选） */
+    val vocabularyId: String
+        get() = prefs.getString(KEY_VOCAB_ID, "")!!.trim()
+
+    /** 上下文增强：把最近几轮识别结果随音频一起发送，提升连贯性与专名召回 */
+    val useContext: Boolean
+        get() = prefs.getBoolean(KEY_USE_CONTEXT, true)
+
     val autoReturn: Boolean
         get() = prefs.getBoolean(KEY_AUTO_RETURN, true)
 
@@ -48,6 +63,9 @@ class VoicePrefs(context: Context) {
         const val KEY_MODEL = "model"
         const val KEY_LANGUAGE = "language"
         const val KEY_API_MODE = "api_mode"
+        const val KEY_HOTWORDS = "hotwords"
+        const val KEY_VOCAB_ID = "vocabulary_id"
+        const val KEY_USE_CONTEXT = "use_context"
         const val KEY_AUTO_RETURN = "auto_return_fcitx"
 
         const val API_MODE_AUTO = "auto"
@@ -61,7 +79,8 @@ class VoicePrefs(context: Context) {
         /** 录音参数：16 kHz 单声道 16-bit PCM（Whisper 推荐输入格式） */
         const val SAMPLE_RATE = 16000
 
-        /** 单次录音上限，防止忘记停止 */
-        const val MAX_RECORD_SECONDS = 60
+        /** 单次录音上限，防止忘记停止（16k/16bit/mono ≈ 32KB/s，120s 约 3.8MB，
+         *  base64 后约 5.1MB，在百炼 10MB 与 OpenAI 25MB 限制内） */
+        const val MAX_RECORD_SECONDS = 120
     }
 }

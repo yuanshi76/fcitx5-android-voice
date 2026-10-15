@@ -84,6 +84,31 @@
         <item>日本語 (ja)</item>
         <item>한국어 (ko)</item>
         <item>粤语 (yue)</item>
+        <item>Tiếng Việt (vi)</item>
+        <item>ไทย (th)</item>
+        <item>Bahasa Indonesia (id)</item>
+        <item>Bahasa Melayu (ms)</item>
+        <item>Filipino (tl)</item>
+        <item>हिन्दी (hi)</item>
+        <item>العربية (ar)</item>
+        <item>Français (fr)</item>
+        <item>Deutsch (de)</item>
+        <item>Español (es)</item>
+        <item>Português (pt)</item>
+        <item>Русский (ru)</item>
+        <item>Italiano (it)</item>
+        <item>Nederlands (nl)</item>
+        <item>Svenska (sv)</item>
+        <item>Dansk (da)</item>
+        <item>Norsk (no)</item>
+        <item>Ελληνικά (el)</item>
+        <item>Polski (pl)</item>
+        <item>Čeština (cs)</item>
+        <item>Magyar (hu)</item>
+        <item>Română (ro)</item>
+        <item>Български (bg)</item>
+        <item>Hrvatski (hr)</item>
+        <item>Slovenčina (sk)</item>
     </string-array>
     <string-array name="language_values">
         <item>auto</item>
@@ -92,10 +117,42 @@
         <item>ja</item>
         <item>ko</item>
         <item>yue</item>
+        <item>vi</item>
+        <item>th</item>
+        <item>id</item>
+        <item>ms</item>
+        <item>tl</item>
+        <item>hi</item>
+        <item>ar</item>
+        <item>fr</item>
+        <item>de</item>
+        <item>es</item>
+        <item>pt</item>
+        <item>ru</item>
+        <item>it</item>
+        <item>nl</item>
+        <item>sv</item>
+        <item>da</item>
+        <item>no</item>
+        <item>el</item>
+        <item>pl</item>
+        <item>cs</item>
+        <item>hu</item>
+        <item>ro</item>
+        <item>bg</item>
+        <item>hr</item>
+        <item>sk</item>
     </string-array>
 
     <string name="pref_api_mode_title">API mode</string>
     <string name="pref_api_mode_summary">How to call the transcription endpoint (auto-detect by URL)</string>
+    <string name="pref_hotwords_title">Instant hotwords</string>
+    <string name="pref_hotwords_summary">Bias recognition toward specific words (Bailian: qwen-audio-3.0-asr-flash)</string>
+    <string name="pref_hotwords_dialog">Comma-separated words, optional weight 1–5 or 50 (super hotword): 马永泽,张三:5,通义:50. OpenAI channels receive them as prompt hints.</string>
+    <string name="pref_vocab_id_title">Hotword list ID</string>
+    <string name="pref_vocab_id_summary">Optional pre-created Bailian vocabulary_id</string>
+    <string name="pref_use_context_title">Context enhancement</string>
+    <string name="pref_use_context_summary">Send recent dictation results with each request for consistency (Bailian native/compatible)</string>
     <string-array name="api_mode_entries">
         <item>Auto (dashscope domains → Bailian native)</item>
         <item>OpenAI compatible (/audio/transcriptions)</item>

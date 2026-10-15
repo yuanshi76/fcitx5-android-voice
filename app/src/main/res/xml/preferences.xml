@@ -76,6 +76,27 @@
             app:useSimpleSummaryProvider="true"
             app:iconSpaceReserved="false" />
 
+        <EditTextPreference
+            app:key="hotwords"
+            app:title="@string/pref_hotwords_title"
+            app:summary="@string/pref_hotwords_summary"
+            app:dialogMessage="@string/pref_hotwords_dialog"
+            app:useSimpleSummaryProvider="true"
+            app:iconSpaceReserved="false" />
+
+        <EditTextPreference
+            app:key="vocabulary_id"
+            app:title="@string/pref_vocab_id_title"
+            app:summary="@string/pref_vocab_id_summary"
+            app:iconSpaceReserved="false" />
+
+        <SwitchPreferenceCompat
+            app:key="use_context"
+            app:title="@string/pref_use_context_title"
+            app:summary="@string/pref_use_context_summary"
+            app:defaultValue="true"
+            app:iconSpaceReserved="false" />
+
     </PreferenceCategory>
 
     <PreferenceCategory

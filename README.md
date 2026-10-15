@@ -65,6 +65,18 @@ fcitx5-android 的已发布版本内置了语音输入集成机制（`app/.../in
 **auto（默认）**：Base URL 含 `maas.aliyuncs.com` / `dashscope.aliyuncs.com` 时走百炼原生，否则走 OpenAI 模式。
 接口模式随「语音方案」一起保存与切换。
 
+### 识别增强（百炼 qwen-audio-3.0-asr-flash）
+- **即时热词**：`parameters.vocabulary`，格式 `词1,词2:5,词3:50`（权重 1–5，50=超级热词）；OpenAI 渠道降级为 prompt 提示。
+- **预编译热词表**：`parameters.vocabulary_id`。
+- **语言提示**：`parameters.language_hints`（auto 不传）；设置页语言扩充至官方 28+ 语种。
+- **上下文增强**：每次请求附带本会话最近 5 轮识别结果（`input_text` 消息，音频消息置后），
+  提升连续听写一致性与专名召回，可在设置中关闭。
+- 单次录音上限提高到 120s（base64 后约 5MB，仍在百炼 10MB 限制内）。
+
+### 规划：实时听写（下版本）
+Token Plan 支持的 `qwen-audio-3.0-realtime-plus` 为实时语音**对话**模型（WS 协议，见 docs/），
+将走原生 WebSocket + OkHttp 实现边说边上屏（partial 结果用 composing text 显示），不引入 NUI aar（+15MB）。
+
 ## 配置项（插件配置页）
 
 | 配置 | 说明 | 默认 |
